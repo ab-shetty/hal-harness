@@ -126,6 +126,8 @@ MODEL_PRICES_DICT = {
                 "openai/gpt-5-2025-08-07": {"prompt_tokens": 1.25/1e6, "completion_tokens": 10/1e6},
                 "gpt-5": {"prompt_tokens": 1.25/1e6, "completion_tokens": 10/1e6},
                 "gpt-5-2025-08-07": {"prompt_tokens": 1.25/1e6, "completion_tokens": 10/1e6},
+                "gpt-5-nano": {"prompt_tokens": 0.05/1e6, "completion_tokens": 0.4/1e6},
+                "gpt-5-mini": {"prompt_tokens": 0.25/1e6, "completion_tokens": 2/1e6},
 }
 
 CACHED_PRICE_OVERRIDES = {
@@ -148,6 +150,8 @@ CACHED_PRICE_OVERRIDES = {
     "gpt-5-2025-08-07": 0.125/1e6,
     "o3-2025-04-16": 0.5/1e6,
     "openai/o3-2025-04-16": 0.5/1e6,
+    "gpt-5-mini": 0.025/1e6,
+    "gpt-5-nano": 0.005/1e6,
 }
 
 def _normalize_usage(cost: Dict[str, Any]) -> Tuple[int, int, int, int]:
