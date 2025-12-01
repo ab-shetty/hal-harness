@@ -6,6 +6,98 @@
 
 This repository provides a standardized evaluation harness for reproducible agent evaluations across various benchmarks. It supports several benchmarks and allows users to add new agents and benchmarks. The unified CLI allows evaluation across all benchmarks and agents. The harness integrates with [Weave](https://wandb.ai/site/weave/) for logging and cost tracking, [Inspect AI](https://github.com/UKGovernmentBEIS/inspect_ai), and the official [Holistic Agent Leaderboard (HAL)](https://hal.cs.princeton.edu) for sharing evaluation results.
 
+## Quick Start: Running CORE-bench
+
+To quickly get started with CORE-bench evaluations:
+
+### 1. Initial Setup
+
+```bash
+# Clone repository
+git clone --recursive https://github.com/ab-shetty/hal-harness.git
+cd hal-harness
+
+# Create and activate conda environment
+conda create -n hal python=3.12
+conda activate hal
+
+# Install HAL package, CORE-bench dependencies
+pip install -e .
+pip install -e .[corebench,coreagent]
+
+# Setup environment variables
+cp .env.template .env
+# Add your API keys to .env file - W&B and OpenAI
+```
+
+### 2. Decrypt CORE-bench Test Set
+
+```bash
+# Decrypt the test set (password: reproducibility)
+gpg --output hal/benchmarks/corebench/core_test.json --decrypt hal/benchmarks/corebench/core_test.json.gpg
+```
+
+### 3. Run Evaluations
+
+**Easy Mode** (Agent provided with results, answers task questions):
+```bash
+hal-eval --benchmark corebench_easy \
+  --agent_dir agents/core_agent \
+  --agent_function main.run \
+  --agent_name "CORE-Agent" \
+  -A model_name="gpt-5-mini"
+```
+
+**Medium Mode** (Agent uses Docker to install dependencies and run code):
+```bash
+hal-eval --benchmark corebench_medium \
+  --agent_dir agents/core_agent \
+  --agent_function main.run \
+  --agent_name "CORE-Agent" \
+  -A model_name="gpt-5-mini"
+```
+
+**Hard Mode** (Agent installs dependencies and runs code from scratch):
+```bash
+hal-eval --benchmark corebench_hard \
+  --agent_dir agents/core_agent \
+  --agent_function main.run \
+  --agent_name "CORE-Agent" \
+  -A model_name="gpt-5-mini"
+```
+
+**With Only a Certain Number of Tasks:**
+```bash
+hal-eval --benchmark corebench_easy \
+  --agent_dir agents/core_agent \
+  --agent_function main.run \
+  --agent_name "CORE-Agent" \
+  -A model_name="gpt-5-mini" \
+  --max_tasks 5
+```
+
+**With Parallelization:**
+```bash
+# Add --max_concurrent flag for faster evaluation
+hal-eval --benchmark corebench_hard \
+  --agent_dir agents/core_agent \
+  --agent_function main.run \
+  --agent_name "CORE-Agent (gpt-4o-mini-2024-07-18)" \
+  -A model_name="gpt-5-mini" \
+  --max_concurrent 5
+```
+
+**Using Azure VMs:**
+```bash
+# For cloud-based evaluation (requires Azure setup)
+hal-eval --benchmark corebench_hard \
+  --agent_dir agents/core_agent \
+  --agent_function main.run \
+  --agent_name "CORE-Agent (gpt-4o-mini-2024-07-18)" \
+  -A model_name="gpt-5-mini" \
+  --vm \
+  --max_concurrent 10
+  
 ## Features
 
 * **Unified `hal-eval` CLI across all benchmarks and agent types**
