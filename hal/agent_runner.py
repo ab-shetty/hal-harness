@@ -30,7 +30,8 @@ class AgentRunner:
                  continue_run: bool = False,
                  run_command: str = None,
                  ignore_errors: bool = False,
-                 max_tasks: Optional[int] = None):
+                 max_tasks: Optional[int] = None,
+                 task_range: Optional[str] = None):
         
         # Validate agent_function format
         if not isinstance(agent_function, str) or '.' not in agent_function:
@@ -110,6 +111,7 @@ class AgentRunner:
         self.continue_run = continue_run
         self.ignore_errors = ignore_errors
         self.max_tasks = max_tasks
+        self.task_range = task_range
         
 
     def get_remaining_tasks(self, dataset: Dict[str, Any]) -> Dict[str, Any]:
@@ -168,8 +170,13 @@ class AgentRunner:
         elif self.continue_run and self.ignore_errors:
             dataset = {}
             
-        # Limit the number of tasks if max_tasks is specified
-        if self.max_tasks and self.max_tasks > 0 and self.max_tasks < len(dataset):
+        # Handle task range or max_tasks
+        if hasattr(self, 'task_range') and self.task_range:
+            start, end = map(int, self.task_range.split('-'))
+            print_step(f"Running tasks {start} to {end}")
+            task_ids = list(dataset.keys())[start-1:end]
+            dataset = {task_id: dataset[task_id] for task_id in task_ids}
+        elif self.max_tasks and self.max_tasks > 0 and self.max_tasks < len(dataset):
             print_step(f"Limiting to the first {self.max_tasks} tasks as requested")
             task_ids = list(dataset.keys())[:self.max_tasks]
             dataset = {task_id: dataset[task_id] for task_id in task_ids}
