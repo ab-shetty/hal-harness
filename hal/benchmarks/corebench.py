@@ -33,7 +33,8 @@ class CoreBench(BaseBenchmark):
         self.benchmark = {}
         self.benchmark_answers = {}
         
-        capsules_dir = os.path.join(os.path.dirname(__file__), "corebench", "capsules")
+        self.capsules_dir = os.path.join(os.path.dirname(__file__), "corebench", "capsules")  # Store for later use
+
         if not os.path.exists(capsules_dir):
             os.makedirs(capsules_dir)
             
@@ -52,8 +53,9 @@ class CoreBench(BaseBenchmark):
             prompt = self._construct_prompt(task)
             self.benchmark[capsule_id] = {
                 "prompt": prompt,
-                "files": self._get_capsule_files_dict(capsule_dir),
+                "files": {},
                 "gpu": True if "gpu" in task else False,
+                "_task_data": task,
             }
             
             # Store results
