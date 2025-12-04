@@ -128,6 +128,10 @@ class LocalRunner:
         temp_dir.mkdir(parents=True, exist_ok=True)
         self.temp_dirs.append(str(temp_dir))
 
+        # Prepare task (download capsule if needed)
+        if hasattr(self.benchmark, 'prepare_task'):
+            self.benchmark.prepare_task(task_id)
+
         try:
             # Copy agent code
             shutil.copytree(agent_dir, temp_dir, dirs_exist_ok=True)

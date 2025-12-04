@@ -40,11 +40,12 @@ class CoreBench(BaseBenchmark):
         total_tasks = len(dataset)
         for i, task in enumerate(dataset, 1):
             capsule_id = task["capsule_id"]
-            capsule_dir = os.path.join(capsules_dir, capsule_id)
+            # Commenting out for now...
+            # capsule_dir = os.path.join(capsules_dir, capsule_id)
 
-            # Check if capsule directory exists, if not download and extract it
-            if not os.path.exists(capsule_dir):
-                self.__download_and_extract_capsule(capsules_dir, capsule_id, task_number=i, total_tasks=total_tasks)
+            # # Check if capsule directory exists, if not download and extract it
+            # if not os.path.exists(capsule_dir):
+            #     self.__download_and_extract_capsule(capsules_dir, capsule_id, task_number=i, total_tasks=total_tasks)
             
             # Create task entry with prompt
             # Use the _construct_prompt method if it exists in the subclass, otherwise use the default prompt
@@ -159,7 +160,26 @@ class CoreBench(BaseBenchmark):
             raise Exception(f"Failed to extract capsule {capsule_id}: {e}")
                 
         return capsule_dir
+
+    def prepare_task(self, task_id: str):
+        """Download and prepare a single task's capsule on-demand"""
+        if self.benchmark[task_id]["files"]:
+            # Already prepared
+            return
         
+        capsule_dir = os.path.join(self.capsules_dir, task_id)
+        
+        # Check if capsule directory exists, if not download and extract it
+        if not os.path.exists(capsule_dir):
+            # Get task number for progress display
+            task_ids = list(self.benchmark.keys())
+            task_number = task_ids.index(task_id) + 1
+            total_tasks = len(task_ids)
+            self.__download_and_extract_capsule(self.capsules_dir, task_id, task_number=task_number, total_tasks=total_tasks)
+        
+        # Populate files
+        self.benchmark[task_id]["files"] = self._get_capsule_files_dict(capsule_dir)
+
     def evaluate_output(self, agent_output: Dict[str, Any], run_id: str) -> Dict[str, Any]:
         """Run evaluation harness. This can score based on the agent's output, or by running an evaluation script on the entire environments returned by the agent (see AppWorld benchmark)."""   
 
