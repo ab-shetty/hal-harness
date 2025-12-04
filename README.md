@@ -67,13 +67,15 @@ hal-eval --benchmark corebench_hard \
 ```
 
 **With Only a Certain Number of Tasks:**
+
+Say you want to run only tasks 5, 6 and 7:
 ```bash
 hal-eval --benchmark corebench_easy \
   --agent_dir agents/core_agent \
   --agent_function main.run \
   --agent_name "CORE-Agent" \
   -A model_name="gpt-5-mini" \
-  --max_tasks 5
+  --task_range 5-7
 ```
 
 **With Parallelization:**
