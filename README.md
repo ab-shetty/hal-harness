@@ -97,6 +97,7 @@ hal-eval --benchmark corebench_hard \
   -A model_name="gpt-5-mini" \
   --vm \
   --max_concurrent 10
+```
   
 ## Features
 
