@@ -35,8 +35,9 @@ class CoreBench(BaseBenchmark):
         
         self.capsules_dir = os.path.join(os.path.dirname(__file__), "corebench", "capsules")  # Store for later use
 
-        if not os.path.exists(capsules_dir):
-            os.makedirs(capsules_dir)
+        # Create capsules directory if it doesn't exist
+        if not os.path.exists(self.capsules_dir):
+            os.makedirs(self.capsules_dir)
             
         total_tasks = len(dataset)
         for i, task in enumerate(dataset, 1):
