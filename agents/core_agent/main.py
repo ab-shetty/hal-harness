@@ -535,7 +535,8 @@ def run(input: dict[str, dict], **kwargs) -> dict[str, str]:
         model_params['api_base'] = "https://api.together.xyz/v1"
     
     if kwargs['model_name'].startswith('nebius/'):
-        model_params['model_id'] = kwargs['model_name'].replace('nebius/', 'openai/')
+        # Strip nebius/ prefix, keeping the rest (e.g., openai/gpt-oss-120b)
+        model_params['model_id'] = kwargs['model_name'].replace('nebius/', '')
         model_params['api_base'] = "https://api.tokenfactory.nebius.com/v1/"
         model_params['api_key'] = os.getenv('NEBIUS_API_KEY')
 
