@@ -78,6 +78,20 @@ hal-eval --benchmark corebench_easy \
   --task_range 5-7
 ```
 
+**With Nebius:**
+
+If you want to use Nebius,
+1. Set NEBIUS_API_KEY in your .env file
+2. Use the model name format `nebius/model_name`
+```bash
+hal-eval --benchmark corebench_easy \
+  --agent_dir agents/core_agent \
+  --agent_function main.run \
+  --agent_name "CORE-Agent" \
+  -A model_name="nebius/openai/gpt-oss-120b" \
+  --task_range 5-7
+```
+
 **With Parallelization:**
 ```bash
 # Add --max_concurrent flag for faster evaluation

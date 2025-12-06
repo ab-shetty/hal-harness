@@ -534,12 +534,6 @@ def run(input: dict[str, dict], **kwargs) -> dict[str, str]:
         model_params['api_key'] = os.environ.get("TOGETHERAI_API_KEY")
         model_params['api_base'] = "https://api.together.xyz/v1"
     
-    if kwargs['model_name'].startswith('nebius/'):
-        # Strip nebius/ prefix, keeping the rest (e.g., openai/gpt-oss-120b)
-        model_params['model_id'] = kwargs['model_name'].replace('nebius/', '')
-        model_params['api_base'] = "https://api.tokenfactory.nebius.com/v1/"
-        model_params['api_key'] = os.getenv('NEBIUS_API_KEY')
-
     if kwargs['benchmark_name'] != 'corebench_easy' and kwargs['benchmark_name'] != 'corebench_medium' and kwargs['benchmark_name'] != 'corebench_hard':
         raise ValueError(f"Unknown benchmark. HAL agent does not support this benchmark: {kwargs['benchmark_name']}")
     

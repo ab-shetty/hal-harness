@@ -128,7 +128,6 @@ MODEL_PRICES_DICT = {
                 "gpt-5-2025-08-07": {"prompt_tokens": 1.25/1e6, "completion_tokens": 10/1e6},
                 "gpt-5-nano": {"prompt_tokens": 0.05/1e6, "completion_tokens": 0.4/1e6},
                 "gpt-5-mini": {"prompt_tokens": 0.25/1e6, "completion_tokens": 2/1e6},
-                "nebius/gpt-oss-120b": {"prompt_tokens": 0.15/1e6, "completion_tokens": 0.6/1e6},
                 "nebius/openai/gpt-oss-120b": {"prompt_tokens": 0.15/1e6, "completion_tokens": 0.6/1e6},
 }
 
