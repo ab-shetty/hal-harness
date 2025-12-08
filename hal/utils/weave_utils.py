@@ -552,6 +552,74 @@ def get_weave_calls(client) -> Tuple[List[Dict[str, Any]], str, str]:
 #     # We return the total cost, requests, and calls
 #     return total_cost
 
+@weave.op(name="run_summary")
+def log_run_summary(eval_results: Dict[str, Any], benchmark_name: str, agent_name: str, run_id: str) -> Dict[str, Any]:
+    """
+    Log a summary of the run with core metrics.
+    
+    Args:
+        eval_results: Dictionary of evaluation results per task
+        benchmark_name: Name of the benchmark
+        agent_name: Name of the agent
+        run_id: The run ID
+        
+    Returns:
+        Dictionary containing summary metrics
+    """
+    # Calculate core metrics
+    total_tasks = len(eval_results)
+    successful_tasks = 0
+    failed_tasks = 0
+    
+    total_written_tasks = 0
+    correct_written_tasks = 0
+    total_vision_tasks = 0
+    correct_vision_tasks = 0
+    
+    for task_id, result in eval_results.items():
+        written_correct = result.get("correct_written_answers", 0)
+        vision_correct = result.get("correct_vision_answers", 0)
+        written_total = result.get("total_written_questions", 0)
+        vision_total = result.get("total_vision_questions", 0)
+        
+        # Track written tasks
+        if written_total > 0:
+            total_written_tasks += 1
+            if written_correct == written_total:
+                correct_written_tasks += 1
+        
+        # Track vision tasks
+        if vision_total > 0:
+            total_vision_tasks += 1
+            if vision_correct == vision_total:
+                correct_vision_tasks += 1
+        
+        # Check if task fully succeeded
+        if (written_correct == written_total and vision_correct == vision_total and 
+            (written_total > 0 or vision_total > 0)):
+            successful_tasks += 1
+        else:
+            failed_tasks += 1
+    
+    # Calculate accuracies
+    overall_accuracy = successful_tasks / total_tasks if total_tasks > 0 else 0
+    written_accuracy = correct_written_tasks / total_written_tasks if total_written_tasks > 0 else 0
+    vision_accuracy = correct_vision_tasks / total_vision_tasks if total_vision_tasks > 0 else 0
+    
+    summary = {
+        "benchmark": benchmark_name,
+        "agent": agent_name,
+        "run_id": run_id,
+        "total_tasks": total_tasks,
+        "successful_tasks": successful_tasks,
+        "failed_tasks": failed_tasks,
+        "overall_accuracy": round(overall_accuracy, 4),
+        "written_accuracy": round(written_accuracy, 4),
+        "vision_accuracy": round(vision_accuracy, 4),
+    }
+    
+    return summary
+    
 def get_task_cost(run_id: str, task_id: str) -> dict:
     """
     Calculate the cost for a specific task ID by filtering calls with that task_id.

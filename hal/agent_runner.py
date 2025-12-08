@@ -12,7 +12,8 @@ from rich.table import Table
 from rich.box import ROUNDED
 from .utils.logging_utils import terminal_print
 from .inspect.inspect import is_inspect_benchmark
-from .utils.weave_utils import get_call_ids, delete_calls
+from .utils.weave_utils import get_call_ids, delete_calls, log_run_summary
+
 class AgentRunner:
     """Handles running agents either locally or on VMs"""
 
@@ -260,14 +261,22 @@ class AgentRunner:
             
             print_step("Use --continue-run flag to retry the remaining tasks. Exiting...")
             # sys.exit(1)
-            
-        # stop weave logging before harness is run to avoid lm as judge to produce additional cost 
-        weave.finish()
-        
+              
         if is_inspect_benchmark(self.benchmark.benchmark_name):
             eval_results = await self.benchmark.evaluate_output(agent_output, self.run_id)
         else:
             eval_results = self.benchmark.evaluate_output(agent_output, self.run_id)
+
+        # Log summary to weave before finishing
+        log_run_summary(
+            eval_results=eval_results,
+            benchmark_name=self.benchmark.benchmark_name,
+            agent_name=agent_name,
+            run_id=self.run_id
+        )
+
+        # Now finish weave logging
+        weave.finish()
         
         print_step("Processing results...")
         results = self.benchmark.process_results(
