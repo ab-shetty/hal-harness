@@ -284,10 +284,9 @@ import importlib.util
 import weave
 import traceback
 
-try:
-    # Initialize weave
-    weave.init("{run_id}")
-    
+@weave.op(name="task_{task_id}")
+def run_task():
+    """Wrapper for task execution"""
     # Load input data
     with open("input.json", "r") as f:
         input_data = json.load(f)
@@ -312,6 +311,15 @@ try:
     # Save output
     with open("output.json", "w") as f:
         json.dump(result, f)
+    
+    return result
+
+try:
+    # Initialize weave
+    weave.init("{run_id}")
+    
+    # Run the task
+    run_task()
 
 except Exception as e:
     print(f"Error running agent: {{e}}")
