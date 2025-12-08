@@ -8,6 +8,7 @@ from typing import Dict, Any
 import numpy as np
 from scipy.stats import t
 import math
+import weave
 
 from hal.utils.logging_utils import create_progress
 from .base_benchmark import BaseBenchmark
@@ -187,6 +188,7 @@ class CoreBench(BaseBenchmark):
         """Run evaluation harness. This can score based on the agent's output, or by running an evaluation script on the entire environments returned by the agent (see AppWorld benchmark)."""   
 
         results = {}
+        task_evaluations = []
         
         for task_id, solution in agent_output.items():
             # Get the ground truth results for this task
@@ -218,6 +220,23 @@ class CoreBench(BaseBenchmark):
                     "total_written_questions": total_written_questions,
                     "total_vision_questions": total_vision_questions
                 }
+
+                # Prepare task evaluation for logging
+                task_eval = {
+                    "task_id": task_id,
+                    "submitted_answer": reported_result,
+                    "correct": (evaluation["correct_written_answers"] == total_written_questions and 
+                            evaluation["correct_vision_answers"] == total_vision_questions and
+                            (total_written_questions > 0 or total_vision_questions > 0)),
+                    "correct_written_answers": evaluation["correct_written_answers"],
+                    "total_written_questions": total_written_questions,
+                    "correct_vision_answers": evaluation["correct_vision_answers"],
+                    "total_vision_questions": total_vision_questions,
+                    "question_breakdown": evaluation["question_breakdown"],
+                    "ground_truth_runs": gt_result
+                }
+                task_evaluations.append(task_eval)
+
             except Exception as e:
                 results[task_id] = {
                     "correct_written_answers": 0,
@@ -226,7 +245,25 @@ class CoreBench(BaseBenchmark):
                     "total_vision_questions": total_vision_questions,
                     "error": str(e)
                 }
-                
+
+                # Log error case
+                task_eval = {
+                    "task_id": task_id,
+                    "submitted_answer": str(solution),
+                    "correct": False,
+                    "correct_written_answers": 0,
+                    "total_written_questions": total_written_questions,
+                    "correct_vision_answers": 0,
+                    "total_vision_questions": total_vision_questions,
+                    "error": str(e),
+                    "ground_truth_runs": gt_result,
+                    "question_breakdown": []
+                }
+                task_evaluations.append(task_eval)
+
+        # Log all task evaluations at once
+        self._log_task_evaluations(task_evaluations, run_id)   
+
         return results
         
     def __eval_result_json(self, gt_result: list, reported_result: Dict):
@@ -235,6 +272,7 @@ class CoreBench(BaseBenchmark):
         # Returns the number of correctly answered questions in the result json
         correct_written_answers = 0
         correct_vision_answers = 0
+        question_breakdown = []  # Track details
 
         # Separate keys into numeric, string, and list types
         numeric_keys = [key for key in gt_result[0].keys() if isinstance(gt_result[0][key], (int, float))]
@@ -273,18 +311,56 @@ class CoreBench(BaseBenchmark):
                 for key in reported_result.keys():
                     if key in numeric_keys:
                         lower_bound, upper_bound = prediction_interval_bounds[key]
-                        if (lower_bound <= reported_result[key] <= upper_bound):
+                        is_correct = (lower_bound <= reported_result[key] <= upper_bound)
+                        if is_correct:
                             if 'fig' in key: correct_vision_answers += 1
                             else: correct_written_answers += 1
+                        
+                        # Add to breakdown
+                        question_breakdown.append({
+                            "question": key,
+                            "type": "numeric",
+                            "is_vision": 'fig' in key,
+                            "correct": is_correct,
+                            "submitted": reported_result[key],
+                            "prediction_interval": {
+                                "lower": round(lower_bound, 3),
+                                "upper": round(upper_bound, 3)
+                            }
+                        })
+                        
                     elif key in list_keys:
                         # Direct list comparison
-                        if reported_result[key] == gt_result[0][key]:
+                        is_correct = reported_result[key] == gt_result[0][key]
+                        if is_correct:
                             if 'fig' in key: correct_vision_answers += 1
                             else: correct_written_answers += 1
+                        
+                        # Add to breakdown
+                        question_breakdown.append({
+                            "question": key,
+                            "type": "list",
+                            "is_vision": 'fig' in key,
+                            "correct": is_correct,
+                            "submitted": reported_result[key],
+                            "expected": gt_result[0][key]
+                        })
+                        
                     elif key in string_keys:
-                        if str(reported_result[key]).lower() == str(gt_result[0][key]).lower():
+                        is_correct = str(reported_result[key]).lower() == str(gt_result[0][key]).lower()
+                        if is_correct:
                             if 'fig' in key: correct_vision_answers += 1
                             else: correct_written_answers += 1
+                        
+                        # Add to breakdown
+                        question_breakdown.append({
+                            "question": key,
+                            "type": "string",
+                            "is_vision": 'fig' in key,
+                            "correct": is_correct,
+                            "submitted": reported_result[key],
+                            "expected": gt_result[0][key]
+                        })
             except Exception:
                 pass
         except Exception as e:
@@ -293,7 +369,8 @@ class CoreBench(BaseBenchmark):
         return {"correct_written_answers": correct_written_answers, 
                 "correct_vision_answers": correct_vision_answers, 
                 "total_written_questions": total_written_questions, 
-                "total_vision_questions": total_vision_questions}
+                "total_vision_questions": total_vision_questions,
+                "question_breakdown": question_breakdown}
         
     def get_metrics(self, eval_results: Dict[str, Any]) -> Dict[str, Any]:
         """Calculate accuracy, successful tasks, and failed tasks IDs"""
@@ -351,6 +428,15 @@ class CoreBench(BaseBenchmark):
             "failed_tasks": failed_tasks
         }
 
+    @weave.op(name="task_evaluations")
+    def _log_task_evaluations(self, task_evaluations: list, run_id: str) -> dict:
+        """Log evaluation results for all tasks"""
+        summary = {
+            "run_id": run_id,
+            "total_tasks": len(task_evaluations),
+            "tasks": task_evaluations
+        }
+        return summary
 
 class CoreBenchEasy(CoreBench):
     """CoreBench benchmark with easy difficulty level"""
