@@ -419,7 +419,7 @@ def process_weave_output(call: Dict[str, Any]) -> Dict[str, Any]:
     json_call = call.dict()
     json_call['started_at'] = started_at
     json_call['ended_at'] = ended_at
-    json_call['weave_task_id'] = call.attributes['weave_task_id']
+    json_call['weave_task_id'] = (call.attributes or {}).get('weave_task_id')
     json_call['created_timestamp'] = started_at
     
     return json_call
@@ -441,6 +441,10 @@ def get_weave_calls(client) -> Tuple[List[Dict[str, Any]], str, str]:
         processed_calls = []
         
         for call in calls:
+            # Skip calls without weave_task_id (e.g., parent op traces)
+            if 'weave_task_id' not in (call.attributes or {}):
+                continue
+            
             task_id = call.attributes['weave_task_id']
             processed_call = process_weave_output(call)
             if processed_call:
